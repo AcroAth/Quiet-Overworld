@@ -77,8 +77,9 @@ run](https://github.com/AcroAth/Quiet-Overworld/actions/workflows/build.yml) and
 
 - The builds are not code-signed. Windows SmartScreen warns the first time (More info → Run anyway); on macOS allow
   the app under System Settings → Privacy & Security.
-- On Linux the tray needs `libayatana-appindicator3-1` (installed with the `.deb`). Most panels open the tray menu on
-  click; use **Open Quiet Overworld** there.
+- On Linux prefer the `.deb` or `.rpm` (under 4 MB). The `.AppImage` carries its own copy of the web engine and is
+  around 80 MB. The tray needs `libayatana-appindicator3-1` (installed with the `.deb`). Most panels open the tray menu
+  on click; use **Open Quiet Overworld** there.
 - CI signs the Android APK with a throwaway key unless the repository secrets `ANDROID_KEYSTORE_BASE64`,
   `ANDROID_KEYSTORE_PASSWORD` and `ANDROID_KEY_ALIAS` are set. Installing an update over an APK signed with another
   key fails; uninstall first.
