@@ -34,12 +34,13 @@ impl BackgroundAudio {
 }
 
 pub trait BackgroundAudioExt<R: Runtime> {
-    fn background_audio(&self) -> &BackgroundAudio;
+    /// The plugin state, once the plugin has been set up.
+    fn background_audio(&self) -> Option<&BackgroundAudio>;
 }
 
 impl<R: Runtime, T: Manager<R>> BackgroundAudioExt<R> for T {
-    fn background_audio(&self) -> &BackgroundAudio {
-        self.state::<BackgroundAudio>().inner()
+    fn background_audio(&self) -> Option<&BackgroundAudio> {
+        self.try_state::<BackgroundAudio>().map(|state| state.inner())
     }
 }
 

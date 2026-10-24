@@ -22,5 +22,7 @@ pub fn update(app: &AppHandle, status: &Status) {
         };
         Notice::Active { title: "Quiet Overworld".into(), text }
     };
-    app.background_audio().set(notice);
+    if let Some(background) = app.background_audio() {
+        background.set(notice);
+    }
 }

@@ -57,7 +57,9 @@ class BackgroundAudioPlugin(private val activity: Activity) : Plugin(activity) {
         askedForNotifications = true
         val permission = Manifest.permission.POST_NOTIFICATIONS
         if (ContextCompat.checkSelfPermission(activity, permission) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(activity, arrayOf(permission), 0x51)
+            activity.runOnUiThread {
+                ActivityCompat.requestPermissions(activity, arrayOf(permission), 0x51)
+            }
         }
     }
 }
