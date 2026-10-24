@@ -109,9 +109,9 @@ jobs:
           node-version: 22
       - run: npm ci
       - name: Build APK
-        env:
-          NDK_HOME: ${{ env.ANDROID_NDK_LATEST_HOME }}
         run: |
+          # The runner image ships an NDK; Tauri finds it through NDK_HOME.
+          export NDK_HOME="${ANDROID_NDK_LATEST_HOME:-$ANDROID_NDK_HOME}"
           npm run tauri android init -- --ci
           npm run tauri android build -- --ci --apk --target aarch64 --target armv7 --target x86_64
       - name: Sign APK

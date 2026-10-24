@@ -48,8 +48,8 @@ track.
 
 ## Light on resources
 
-- No music, browser engine or runtime is bundled. The app uses the OS webview (Tauri), and the Linux release binary is
-  about 9 MB.
+- No music, browser engine or runtime is bundled. The app uses the OS webview (Tauri): the Linux installer is under
+  4 MB, about 9 MB once installed.
 - Closing the window **destroys** the webview instead of hiding it. In the tray only the small Rust process is left.
   Started with `--hidden` (as autostart does), it runs with no browser processes at all: about 12 MB of private memory
   in one process on Linux.
