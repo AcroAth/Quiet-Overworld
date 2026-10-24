@@ -42,6 +42,9 @@
         "depends": []
       }
     },
+    "macOS": {
+      "signingIdentity": "-"
+    },
     "android": {
       "minSdkVersion": 26
     }

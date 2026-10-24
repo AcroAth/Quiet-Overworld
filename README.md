@@ -75,8 +75,9 @@ CI builds installers on every push: open the latest successful [Build workflow
 run](https://github.com/AcroAth/Quiet-Overworld/actions/workflows/build.yml) and download the artifact for your system
 (`.msi`/`.exe`, `.dmg`, `.deb`/`.rpm`/`.AppImage`, `.apk`).
 
-- The builds are not code-signed. Windows SmartScreen warns the first time (More info → Run anyway); on macOS allow
-  the app under System Settings → Privacy & Security.
+- The builds are not signed by a known developer. Windows SmartScreen warns the first time (More info → Run anyway).
+  On macOS, open the app once, then allow it under System Settings → Privacy & Security → Open Anyway (or run
+  `xattr -dr com.apple.quarantine "/Applications/Quiet Overworld.app"`).
 - On Linux prefer the `.deb` or `.rpm` (under 4 MB). The `.AppImage` carries its own copy of the web engine and is
   around 80 MB. The tray needs `libayatana-appindicator3-1` (installed with the `.deb`). Most panels open the tray menu
   on click; use **Open Quiet Overworld** there.
