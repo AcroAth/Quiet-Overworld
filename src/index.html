@@ -3,116 +3,144 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="color-scheme" content="dark light" />
+    <meta name="color-scheme" content="dark" />
     <title>Quiet Overworld</title>
     <link rel="stylesheet" href="style.css" />
     <script type="module" src="main.js" defer></script>
   </head>
   <body>
+    <div class="glow" aria-hidden="true">
+      <div class="glow-low"></div>
+      <div class="glow-high"></div>
+    </div>
+
     <main>
       <header>
-        <img src="icon.png" alt="" width="28" height="28" />
-        <h1>Quiet Overworld</h1>
+        <img src="icon.png" alt="" width="16" height="16" />
+        <h1 class="visually-hidden">Quiet Overworld</h1>
+        <button id="open-settings" class="icon" type="button" aria-label="Settings" aria-haspopup="dialog">
+          <svg viewBox="0 0 256 256" aria-hidden="true"><path d="M128,80a48,48,0,1,0,48,48A48.05,48.05,0,0,0,128,80Zm0,80a32,32,0,1,1,32-32A32,32,0,0,1,128,160Zm109.94-52.79a8,8,0,0,0-3.890-5.4l-29.83-17-.12-33.62a8,8,0,0,0-2.83-6.08,111.91,111.91,0,0,0-36.72-20.67,8,8,0,0,0-6.46.59L128,41.85,97.88,25a8,8,0,0,0-6.47-.6A112.1,112.1,0,0,0,54.73,45.15a8,8,0,0,0-2.83,6.07l-.15,33.65-29.83,17a8,8,0,0,0-3.89,5.4,106.47,106.47,0,0,0,0,41.56,8,8,0,0,0,3.89,5.4l29.83,17,.12,33.62a8,8,0,0,0,2.83,6.08,111.91,111.91,0,0,0,36.72,20.67,8,8,0,0,0,6.46-.59L128,214.15,158.12,231a7.91,7.91,0,0,0,3.9,1,8.09,8.09,0,0,0,2.57-.42,112.1,112.1,0,0,0,36.68-20.73,8,8,0,0,0,2.83-6.07l.15-33.65,29.83-17a8,8,0,0,0,3.89-5.4A106.47,106.47,0,0,0,237.94,107.21Zm-15,34.91-28.57,16.25a8,8,0,0,0-3,3c-.58,1-1.19,2.06-1.81,3.06a7.94,7.94,0,0,0-1.22,4.21l-.15,32.25a95.89,95.89,0,0,1-25.37,14.3L134,199.13a8,8,0,0,0-3.91-1h-.19c-1.21,0-2.43,0-3.64,0a8.08,8.08,0,0,0-4.1,1l-28.84,16.1A96,96,0,0,1,67.88,201l-.11-32.2a8,8,0,0,0-1.22-4.22c-.62-1-1.23-2-1.8-3.06a8.09,8.09,0,0,0-3-3.06l-28.6-16.29a90.49,90.49,0,0,1,0-28.26L61.67,97.63a8,8,0,0,0,3-3c.58-1,1.19-2.06,1.81-3.06a7.94,7.94,0,0,0,1.22-4.21l.15-32.25a95.89,95.89,0,0,1,25.37-14.3L122,56.87a8,8,0,0,0,4.1,1c1.21,0,2.43,0,3.64,0a8.08,8.08,0,0,0,4.1-1l28.84-16.1A96,96,0,0,1,188.12,55l.11,32.2a8,8,0,0,0,1.22,4.22c.62,1,1.23,2,1.8,3.06a8.09,8.09,0,0,0,3,3.06l28.6,16.29A90.49,90.49,0,0,1,222.9,142.12Z"/></svg>
+        </button>
       </header>
 
-      <section class="card" aria-live="polite">
-        <p class="eyebrow" id="eyebrow">Looking for music…</p>
-        <p class="title" id="title">&nbsp;</p>
+      <section class="player" aria-live="polite">
+        <p class="eyebrow" id="eyebrow">Starting</p>
+        <p class="title" id="title">Looking for music…</p>
         <p class="subtitle" id="subtitle">&nbsp;</p>
         <div class="progress" id="progress" hidden>
           <div class="bar"><div class="fill" id="fill"></div></div>
           <div class="times"><span id="elapsed">0:00</span><span id="total"></span></div>
         </div>
         <p class="error" id="error" hidden></p>
-      </section>
 
-      <div class="controls">
-        <button id="pause" type="button">Pause</button>
-        <button id="next" type="button">Play a song now</button>
-      </div>
-
-      <form id="settings" autocomplete="off">
-        <label class="row" id="situation-row">
-          <span>Music</span>
-          <select name="situation" id="situation"></select>
-        </label>
-
-        <label class="row">
-          <span>Frequency</span>
-          <select name="frequency">
-            <option value="default">Default</option>
-            <option value="frequent">Frequent</option>
-            <option value="constant">Constant</option>
-            <option value="custom">Custom</option>
-          </select>
-        </label>
-        <div class="row custom" id="custom-row" hidden>
-          <span>Between</span>
-          <span class="minutes">
-            <input name="customMinMinutes" type="number" min="0" max="1440" step="0.5" inputmode="decimal" aria-label="Minimum minutes" />
-            and
-            <input name="customMaxMinutes" type="number" min="0" max="1440" step="0.5" inputmode="decimal" aria-label="Maximum minutes" />
-            min
-          </span>
+        <div class="controls">
+          <button id="pause" class="icon round primary" type="button" aria-label="Pause">
+            <svg class="when-playing" viewBox="0 0 256 256" aria-hidden="true"><path d="M216,48V208a16,16,0,0,1-16,16H160a16,16,0,0,1-16-16V48a16,16,0,0,1,16-16h40A16,16,0,0,1,216,48ZM96,32H56A16,16,0,0,0,40,48V208a16,16,0,0,0,16,16H96a16,16,0,0,0,16-16V48A16,16,0,0,0,96,32Z"/></svg>
+            <svg class="when-paused" viewBox="0 0 256 256" aria-hidden="true"><path d="M240,128a15.74,15.74,0,0,1-7.6,13.51L88.32,229.65a16,16,0,0,1-16.2.3A15.86,15.86,0,0,1,64,216.13V39.87a15.86,15.86,0,0,1,8.12-13.82,16,16,0,0,1,16.2.3L232.4,114.49A15.74,15.74,0,0,1,240,128Z"/></svg>
+          </button>
+          <button id="next" class="icon round" type="button" aria-label="Play a song now">
+            <svg viewBox="0 0 256 256" aria-hidden="true"><path d="M200,32a8,8,0,0,0-8,8v69.23L72.43,34.45A15.95,15.95,0,0,0,48,47.88V208.12a16,16,0,0,0,24.43,13.43L192,146.77V216a8,8,0,0,0,16,0V40A8,8,0,0,0,200,32ZM64,207.93V48.05l127.84,80Z"/></svg>
+          </button>
         </div>
-        <p class="hint" id="gap-hint"></p>
+      </section>
+    </main>
 
-        <label class="row">
-          <span>Volume</span>
-          <span class="volume">
-            <input name="volume" type="range" min="0" max="100" step="1" />
-            <output id="volume-out">100%</output>
-          </span>
-        </label>
+    <dialog id="sheet" aria-labelledby="sheet-title">
+      <div class="sheet">
+        <div class="sheet-head">
+          <h2 id="sheet-title">Settings</h2>
+          <button id="close-settings" class="icon" type="button" aria-label="Close">
+            <svg viewBox="0 0 256 256" aria-hidden="true"><path d="M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z"/></svg>
+          </button>
+        </div>
 
-        <details id="more">
-          <summary>More settings</summary>
-
-          <label class="row desktop-only" id="source-row">
-            <span>Source</span>
-            <select name="source">
-              <option value="minecraft">Minecraft</option>
-              <option value="local">Installed game only</option>
-              <option value="folder">My own music folder</option>
-            </select>
-          </label>
-          <p class="hint desktop-only" id="source-hint"></p>
-
-          <label class="row" id="version-row">
-            <span>Version</span>
-            <select name="gameVersion" id="version"><option value="">Latest release</option></select>
-          </label>
-
-          <div class="row path desktop-only" id="install-row">
-            <label for="minecraftDir">Game folder</label>
-            <span class="pick">
-              <input id="minecraftDir" name="minecraftDir" type="text" spellcheck="false" />
-              <button type="button" data-pick="minecraftDir" class="desktop-only">Browse</button>
-            </span>
+        <form id="settings" autocomplete="off">
+          <div class="field" id="situation-row">
+            <label for="situation">Music</label>
+            <select name="situation" id="situation"></select>
           </div>
 
-          <div class="row path desktop-only" id="folder-row">
-            <label for="musicFolder">Music folder</label>
-            <span class="pick">
-              <input id="musicFolder" name="musicFolder" type="text" spellcheck="false" placeholder="Folder with .ogg, .mp3 or .flac files" />
-              <button type="button" data-pick="musicFolder" class="desktop-only">Browse</button>
-            </span>
-          </div>
-
-          <fieldset class="desktop-only">
-            <label class="check"><input type="checkbox" name="closeToTray" /> Keep playing in the tray when the window is closed</label>
-            <label class="check"><input type="checkbox" name="startHidden" /> Start in the tray</label>
-            <label class="check"><input type="checkbox" name="autostart" /> Start when I log in</label>
+          <fieldset class="field">
+            <legend>Frequency</legend>
+            <div class="seg">
+              <label><input type="radio" name="frequency" value="default" />Default</label>
+              <label><input type="radio" name="frequency" value="frequent" />Frequent</label>
+              <label><input type="radio" name="frequency" value="constant" />Constant</label>
+              <label><input type="radio" name="frequency" value="custom" />Custom</label>
+            </div>
+            <div class="minutes" id="custom-row" hidden>
+              Between
+              <input name="customMinMinutes" type="number" min="0" max="1440" step="0.5" inputmode="decimal" aria-label="Minimum minutes" />
+              and
+              <input name="customMaxMinutes" type="number" min="0" max="1440" step="0.5" inputmode="decimal" aria-label="Maximum minutes" />
+              min
+            </div>
+            <p class="hint" id="gap-hint"></p>
           </fieldset>
 
-          <button type="button" id="reload" class="link">Look for music again</button>
-        </details>
-      </form>
+          <div class="field">
+            <label for="volume">Volume</label>
+            <span class="volume">
+              <svg viewBox="0 0 256 256" aria-hidden="true"><path d="M155.51,24.81a8,8,0,0,0-8.42.88L77.25,80H32A16,16,0,0,0,16,96v64a16,16,0,0,0,16,16H77.25l69.84,54.31A8,8,0,0,0,160,224V32A8,8,0,0,0,155.51,24.81ZM32,96H72v64H32ZM144,207.64,88,164.09V91.91l56-43.55ZM208,128a39.93,39.93,0,0,1-10,26.46,8,8,0,0,1-12-10.58,24,24,0,0,0,0-31.72,8,8,0,1,1,12-10.58A40,40,0,0,1,208,128Z"/></svg>
+              <input id="volume" name="volume" type="range" min="0" max="100" step="1" />
+              <output id="volume-out">100%</output>
+            </span>
+          </div>
 
-      <footer>
-        <p id="library">&nbsp;</p>
-        <p>Music by C418, Lena Raine and others, © Mojang. Nothing is bundled or saved; tracks come from Mojang or your own game.</p>
-      </footer>
-    </main>
+          <details id="more">
+            <summary>
+              <svg viewBox="0 0 256 256" aria-hidden="true"><path d="M181.66,133.66l-80,80a8,8,0,0,1-11.32-11.32L164.69,128,90.34,53.66a8,8,0,0,1,11.32-11.32l80,80A8,8,0,0,1,181.66,133.66Z"/></svg>
+              More settings
+            </summary>
+
+            <div class="more">
+              <div class="field desktop-only" id="source-row">
+                <label for="source">Source</label>
+                <select name="source" id="source">
+                  <option value="minecraft">Minecraft</option>
+                  <option value="local">Installed game only</option>
+                  <option value="folder">My own music folder</option>
+                </select>
+                <p class="hint" id="source-hint"></p>
+              </div>
+
+              <div class="field" id="version-row">
+                <label for="version">Version</label>
+                <select name="gameVersion" id="version"><option value="">Latest release</option></select>
+              </div>
+
+              <div class="field desktop-only" id="install-row">
+                <label for="minecraftDir">Game folder</label>
+                <span class="pick">
+                  <input id="minecraftDir" name="minecraftDir" type="text" spellcheck="false" />
+                  <button type="button" data-pick="minecraftDir" class="secondary">Browse</button>
+                </span>
+              </div>
+
+              <div class="field desktop-only" id="folder-row">
+                <label for="musicFolder">Music folder</label>
+                <span class="pick">
+                  <input id="musicFolder" name="musicFolder" type="text" spellcheck="false" placeholder="Folder with .ogg, .mp3 or .flac files" />
+                  <button type="button" data-pick="musicFolder" class="secondary">Browse</button>
+                </span>
+              </div>
+
+              <fieldset class="checks desktop-only">
+                <label><input type="checkbox" name="closeToTray" />Keep playing in the tray when the window is closed</label>
+                <label><input type="checkbox" name="startHidden" />Start in the tray</label>
+                <label><input type="checkbox" name="autostart" />Start when I log in</label>
+              </fieldset>
+
+              <div><button type="button" id="reload" class="ghost">Look for music again</button></div>
+            </div>
+          </details>
+        </form>
+
+        <footer>
+          <p id="library">&nbsp;</p>
+          <p>Music by C418, Lena Raine and others, © Mojang. Nothing is bundled or saved; tracks come from Mojang or your own game.</p>
+        </footer>
+      </div>
+    </dialog>
   </body>
 </html>

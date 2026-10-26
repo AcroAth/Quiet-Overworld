@@ -27,11 +27,6 @@ const NAMED = {
   "music.menu": ["Other", "Title screen"],
 };
 const GROUPS = ["Overworld", "Biomes", "The Nether", "The End", "Other"];
-const ORIGINS = {
-  stream: "streamed from Mojang",
-  installed: "from your game files",
-  folder: "from your music folder",
-};
 
 const words = (id) => id.split("_").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
 
@@ -85,7 +80,7 @@ function renderStatus() {
   } else if (s.state === "playing") {
     eyebrow = s.paused ? "Paused" : "Now playing";
     title = s.title;
-    subtitle = [s.artist, ORIGINS[s.origin]].filter(Boolean).join(" · ") || " ";
+    subtitle = s.artist ?? " ";
     const position = s.positionMs + (s.paused ? 0 : since);
     const duration = s.durationMs;
     progress = true;
@@ -111,8 +106,9 @@ function renderStatus() {
   const error = s.error ?? settingsError;
   $("error").hidden = !error;
   $("error").textContent = error ?? "";
-  $("pause").textContent = s.paused ? "Resume" : "Pause";
-  $("next").textContent = s.state === "playing" ? "Next song" : "Play a song now";
+  document.body.classList.toggle("paused", Boolean(s.paused));
+  $("pause").setAttribute("aria-label", s.paused ? "Resume" : "Pause");
+  $("next").setAttribute("aria-label", s.state === "playing" ? "Next song" : "Play a song now");
   $("library").textContent = s.library ?? " ";
   $("gap-hint").textContent = s.gapMs ? gapText(s.gapMs) : "";
 }
@@ -157,6 +153,7 @@ function fillForm() {
     if (!el.name || !(el.name in settings)) continue;
     const value = settings[el.name];
     if (el.type === "checkbox") el.checked = Boolean(value);
+    else if (el.type === "radio") el.checked = el.value === value;
     else if (el.name === "volume") el.value = Math.round(value * 100);
     else if (el === document.activeElement && el.type !== "select-one") continue;
     else if (el.name === "gameVersion") ensureVersion(value);
@@ -193,6 +190,9 @@ function readForm() {
   for (const el of form.elements) {
     if (!el.name || !(el.name in next)) continue;
     if (el.type === "checkbox") next[el.name] = el.checked;
+    else if (el.type === "radio") {
+      if (el.checked) next[el.name] = el.value;
+    }
     else if (el.name === "volume") next.volume = Number(el.value) / 100;
     else if (el.type === "number") next[el.name] = Number(el.value);
     else next[el.name] = el.value;
@@ -284,6 +284,11 @@ async function init() {
   $("pause").addEventListener("click", () => invoke("toggle_pause"));
   $("next").addEventListener("click", () => invoke("next_track"));
   $("reload").addEventListener("click", () => invoke("reload_library"));
+  const sheet = $("sheet");
+  $("open-settings").addEventListener("click", () => sheet.showModal());
+  $("close-settings").addEventListener("click", () => sheet.close());
+  // A click outside the sheet lands on its backdrop, which belongs to the dialog itself.
+  sheet.addEventListener("click", (event) => event.target === sheet && sheet.close());
   $("more").addEventListener("toggle", (event) => event.target.open && loadVersions());
   for (const button of document.querySelectorAll("[data-pick]")) {
     button.addEventListener("click", async () => {
