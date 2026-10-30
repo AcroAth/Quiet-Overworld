@@ -204,6 +204,43 @@ audio.preload = "auto";
 audio.setAttribute("playsinline", "");
 const silence = silenceUrl();
 
+// Add ?debug to the address to see what the audio element does, on the page.
+const debugLog = new URLSearchParams(location.search).has("debug") ? document.createElement("pre") : null;
+function log(message) {
+  if (!debugLog) return;
+  const time = new Date().toTimeString().slice(0, 8);
+  const hidden = document.hidden ? " [hidden]" : "";
+  debugLog.textContent = `${time}${hidden} ${message}\n${debugLog.textContent}`.slice(0, 6000);
+}
+if (debugLog) {
+  debugLog.className = "debug-log";
+  document.body.append(debugLog);
+  for (const event of ["play", "playing", "pause", "ended", "waiting", "stalled", "abort", "emptied"]) {
+    audio.addEventListener(event, () => log(`event ${event} t=${audio.currentTime.toFixed(1)}`));
+  }
+  audio.addEventListener("error", () => log(`event error code=${audio.error?.code} ${audio.error?.message ?? ""}`));
+  document.addEventListener("visibilitychange", () => log(`page ${document.hidden ? "hidden" : "visible"}`));
+}
+
+function setSource(url) {
+  log(`src ${url === silence ? "silence" : url.replace(/^https:\/\/([^/]+)\/.*?([0-9a-f]{6})[0-9a-f]*$/, "$1 …$2")}`);
+  audio.src = url;
+}
+
+// Safari's engine, which every iPhone browser uses, refuses Mojang's links,
+// and retrying after a refusal is too late: iOS will not start the element
+// again without a tap. So those browsers use the relay from the start.
+const RELAY_KEY = "quiet-overworld.relay";
+function relayFirst() {
+  if (!RELAY_URL) return false;
+  try {
+    if (localStorage.getItem(RELAY_KEY)) return true;
+  } catch {
+    // No storage; fall through.
+  }
+  return (navigator.vendor ?? "").startsWith("Apple");
+}
+
 const engine = {
   settings: loadSettings(),
   catalog: null,
@@ -225,7 +262,7 @@ const engine = {
   // Set while the engine itself pauses the element, so a pause coming from
   // the system (a call, another app's audio) can be told apart.
   pausing: false,
-  useRelay: false,
+  useRelay: relayFirst(),
 };
 
 async function loadCatalog() {
@@ -250,11 +287,16 @@ async function loadCatalog() {
 
 function play() {
   engine.pausing = false;
-  audio.play().catch((error) => {
-    if (error.name !== "NotAllowedError") return;
-    engine.trackError = BLOCKED;
-    setPaused(true);
-  });
+  log(`play() in ${engine.phase}`);
+  audio.play().then(
+    () => log("play() ok"),
+    (error) => {
+      log(`play() failed: ${error.name} ${error.message}`);
+      if (error.name !== "NotAllowedError") return;
+      engine.trackError = BLOCKED;
+      setPaused(true);
+    },
+  );
 }
 
 function stopElement() {
@@ -270,7 +312,7 @@ function wait(delay) {
   engine.left = delay;
   engine.due = engine.paused ? null : Date.now() + delay;
   audio.loop = true;
-  if (audio.src !== silence) audio.src = silence;
+  if (audio.src !== silence) setSource(silence);
   if (!engine.paused) play();
   publish();
 }
@@ -292,7 +334,7 @@ function startTrack(avoid) {
   engine.due = null;
   engine.track = { key: entry.path, title, artist, gain: entry.volume, hash: info.hash };
   audio.loop = false;
-  audio.src = trackUrl(info.hash);
+  setSource(trackUrl(info.hash));
   applyVolume();
   if (!engine.paused) play();
   publish();
@@ -413,7 +455,12 @@ audio.addEventListener("error", () => {
   const unsupported = audio.error?.code === MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED;
   if (unsupported && RELAY_URL && !engine.useRelay) {
     engine.useRelay = true;
-    audio.src = trackUrl(engine.track.hash);
+    try {
+      localStorage.setItem(RELAY_KEY, "1");
+    } catch {
+      // Private browsing: decided again next time.
+    }
+    setSource(trackUrl(engine.track.hash));
     if (!engine.paused) play();
     return;
   }

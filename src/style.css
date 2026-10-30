@@ -684,3 +684,21 @@ footer {
 .mobile .desktop-only {
   display: none !important;
 }
+
+/* The ?debug event log of the web version. */
+.debug-log {
+  position: fixed;
+  top: 52px;
+  left: 8px;
+  right: 8px;
+  max-height: 45%;
+  overflow-y: auto;
+  margin: 0;
+  padding: 8px;
+  font: 10px/1.35 ui-monospace, monospace;
+  white-space: pre-wrap;
+  color: var(--neutral-300);
+  background: color-mix(in srgb, #07080d 85%, transparent);
+  border-radius: 8px;
+  z-index: 10;
+}
