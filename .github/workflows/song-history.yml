@@ -1,0 +1,33 @@
+name: Song history
+
+# Finds which release first had each Minecraft song and commits the result to
+# data/song-history.json. Monthly, to pick up music from new updates.
+on:
+  schedule:
+    - cron: "41 5 3 * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    name: Update
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node scripts/song-history.mjs data/song-history.json
+      - name: Commit if changed
+        run: |
+          git add data/song-history.json
+          if git diff --cached --quiet; then
+            echo "No changes."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Update song history"
+          git push
