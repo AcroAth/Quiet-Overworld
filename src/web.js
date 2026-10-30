@@ -37,6 +37,8 @@ const DEFAULTS = {
   closeToTray: false,
   startHidden: false,
   autostart: false,
+  // Song keys to play; null means the default songs.
+  songs: null,
 };
 
 // Delays of each kind of music in ticks: [min, max, replaces the current song].
@@ -82,6 +84,7 @@ function sanitized(input) {
   const minutes = (m, fallback) => (Number.isFinite(m) ? Math.min(1440, Math.max(0, m)) : fallback);
   s.customMinMinutes = minutes(s.customMinMinutes, 3);
   s.customMaxMinutes = Math.max(minutes(s.customMaxMinutes, 8), s.customMinMinutes);
+  s.songs = Array.isArray(s.songs) ? [...new Set(s.songs.filter((k) => typeof k === "string"))].sort() : null;
   return s;
 }
 
@@ -130,9 +133,10 @@ function volumeWorks() {
   return probe.volume === 0.5;
 }
 
-function pick(catalog, situation, avoid) {
-  const entries = catalog.events[situation];
-  if (!entries) return null;
+function pick(catalog, situation, avoid, allowed) {
+  const { byPath } = songInfo(catalog);
+  const entries = (catalog.events[situation] ?? []).filter((e) => allowed.has(byPath[e.path]));
+  if (!entries.length) return null;
   let pool = entries.filter((e) => e.path !== avoid);
   if (pool.every((e) => e.weight === 0)) pool = entries;
   const total = pool.reduce((sum, e) => sum + e.weight, 0);
@@ -145,8 +149,46 @@ function pick(catalog, situation, avoid) {
   return pool[pool.length - 1];
 }
 
-function trackCount(catalog, situation) {
-  return new Set((catalog.events[situation] ?? []).map((e) => e.path)).size;
+// Identifies a song across game versions; the same rule as in
+// scripts/mojang.mjs and src-tauri/src/history.rs.
+function songKey(title) {
+  const name = title.includes(" - ") ? title.slice(title.indexOf(" - ") + 3) : title;
+  return name
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "");
+}
+
+// The catalog's songs in update order, the song key of each track, and the
+// default songs: for each situation, those from the earliest update that had
+// music for it.
+function songInfo(catalog) {
+  if (catalog.songInfo) return catalog.songInfo;
+  const order = new Map((catalog.updates ?? []).map((u, i) => [u.id, i]));
+  const byPath = {};
+  const songs = new Map();
+  for (const [path, track] of Object.entries(catalog.tracks)) {
+    const key = songKey(track.title);
+    byPath[path] = key;
+    if (songs.has(key)) continue;
+    const [title, artist] = splitTitle(track.title);
+    const update = track.added ?? catalog.version;
+    songs.set(key, { key, title, artist, update, rank: order.get(update) ?? order.size });
+  }
+  const defaults = new Set();
+  for (const entries of Object.values(catalog.events)) {
+    const keys = entries.map((e) => byPath[e.path]);
+    const first = Math.min(...keys.map((k) => songs.get(k).rank));
+    for (const key of keys) if (songs.get(key).rank === first) defaults.add(key);
+  }
+  const list = [...songs.values()].sort((a, b) => a.rank - b.rank || a.title.localeCompare(b.title));
+  catalog.songInfo = { byPath, songs: list, defaults };
+  return catalog.songInfo;
+}
+
+function allowedSongs() {
+  return new Set(engine.settings.songs ?? songInfo(engine.catalog).defaults);
 }
 
 function splitTitle(full) {
@@ -235,10 +277,12 @@ function wait(delay) {
 
 function startTrack(avoid) {
   if (!engine.catalog) return wait(0);
-  const entry = pick(engine.catalog, engine.settings.situation, avoid);
+  const entry = pick(engine.catalog, engine.settings.situation, avoid, allowedSongs());
   const info = entry && engine.catalog.tracks[entry.path];
   if (!info) {
-    engine.trackError = "There is no music for this situation here, pick another one";
+    engine.trackError = engine.catalog.events[engine.settings.situation]
+      ? "None of the checked songs plays with this music. Check some under Songs."
+      : "There is no music for this situation here, pick another one";
     wait(0);
     engine.due = null;
     return publish();
@@ -315,6 +359,12 @@ function applySettings(next) {
   const timingChanged = ["situation", "frequency", "customMinMinutes", "customMaxMinutes"].some(
     (key) => old[key] !== next[key],
   );
+  const songsChanged = String(old.songs) !== String(next.songs);
+  if (songsChanged && engine.phase === "waiting" && engine.due === null && engine.started && !engine.paused) {
+    // Nothing could play before; try the new songs.
+    engine.trackError = null;
+    if (engine.catalog) engine.due = Date.now() + engine.left;
+  }
   if (!timingChanged) return publish();
   engine.trackError = null;
   const [minTicks, , replaces] = timing(next.situation);
@@ -430,11 +480,25 @@ function status() {
     atMs: now,
     library: null,
     situations: catalog ? Object.keys(catalog.events) : [],
+    songs: [],
+    updates: [],
     error: engine.trackError ?? engine.catalogError,
   };
   if (catalog) {
-    const count = trackCount(catalog, engine.settings.situation);
-    s.library = `Minecraft ${catalog.version} · ${count} ${count === 1 ? "track" : "tracks"}`;
+    const { byPath, songs, defaults } = songInfo(catalog);
+    const allowed = allowedSongs();
+    const here = new Set((catalog.events[engine.settings.situation] ?? []).map((e) => byPath[e.path]));
+    s.songs = songs.map(({ key, title, artist, update }) => ({
+      key,
+      title,
+      artist,
+      update,
+      default: defaults.has(key),
+      here: here.has(key),
+    }));
+    s.updates = catalog.updates ?? [];
+    const checked = [...here].filter((key) => allowed.has(key)).length;
+    s.library = `Minecraft ${catalog.version} · ${checked} of ${here.size} songs`;
   }
   if (!engine.started) {
     s.state = "ready";

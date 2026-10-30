@@ -61,6 +61,16 @@
             <select name="situation" id="situation"></select>
           </div>
 
+          <div class="field" id="songs-row" hidden>
+            <label for="song-group">Songs</label>
+            <div class="song-tools">
+              <select id="song-group" aria-label="Group of songs"></select>
+              <button type="button" class="secondary" id="check-group">Check all</button>
+              <button type="button" class="secondary" id="uncheck-group">Uncheck all</button>
+            </div>
+            <div class="songs" id="songs"></div>
+          </div>
+
           <fieldset class="field">
             <legend>Frequency</legend>
             <div class="seg">

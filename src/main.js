@@ -144,6 +144,68 @@ function renderSituations() {
     }
   }
   select.value = settings.situation;
+  renderSongs();
+}
+
+// "Original (1.0)", or just the version when the update has no name.
+function updateLabel(id) {
+  const update = status.updates?.find((u) => u.id === id);
+  return update?.name ? `${update.name} (${id})` : id;
+}
+
+function checkedSongs() {
+  return new Set(settings.songs ?? status.songs.filter((song) => song.default).map((song) => song.key));
+}
+
+// The checkboxes for the songs the chosen music can play, by update.
+function renderSongs() {
+  const songs = (status?.songs ?? []).filter((song) => song.here);
+  $("songs-row").hidden = !songs.length;
+  if (!songs.length) return;
+  const list = $("songs");
+  const signature = songs.map((song) => song.key).join("|");
+  if (list.dataset.signature !== signature) {
+    list.dataset.signature = signature;
+    const group = $("song-group");
+    const chosen = group.value;
+    group.replaceChildren(new Option("All songs", ""));
+    list.replaceChildren();
+    let update = null;
+    for (const song of songs) {
+      if (song.update !== update) {
+        update = song.update;
+        const heading = document.createElement("h3");
+        heading.textContent = updateLabel(update);
+        list.append(heading);
+        group.append(new Option(updateLabel(update), update));
+      }
+      const box = document.createElement("input");
+      box.type = "checkbox";
+      box.dataset.song = song.key;
+      box.dataset.update = song.update;
+      const title = document.createElement("span");
+      title.textContent = song.title;
+      const label = document.createElement("label");
+      label.append(box, title);
+      if (song.artist) {
+        const artist = document.createElement("small");
+        artist.textContent = song.artist;
+        label.append(artist);
+      }
+      list.append(label);
+    }
+    group.value = [...group.options].some((option) => option.value === chosen) ? chosen : "";
+  }
+  const checked = checkedSongs();
+  for (const box of list.querySelectorAll("input")) box.checked = checked.has(box.dataset.song);
+}
+
+function setGroupChecked(checked) {
+  const update = $("song-group").value;
+  for (const box of $("songs").querySelectorAll("input")) {
+    if (!update || box.dataset.update === update) box.checked = checked;
+  }
+  save();
 }
 
 function ensureVersion(version) {
@@ -202,6 +264,17 @@ function readForm() {
     else if (el.name === "volume") next.volume = Number(el.value) / 100;
     else if (el.type === "number") next[el.name] = Number(el.value);
     else next[el.name] = el.value;
+  }
+  if (status?.songs?.length) {
+    // Songs the list does not show (other music) keep their state.
+    const before = checkedSongs();
+    const songs = new Set(before);
+    for (const box of $("songs").querySelectorAll("input")) {
+      if (box.checked) songs.add(box.dataset.song);
+      else songs.delete(box.dataset.song);
+    }
+    const changed = songs.size !== before.size || [...songs].some((key) => !before.has(key));
+    if (changed) next.songs = [...songs].sort();
   }
   return next;
 }
@@ -292,6 +365,9 @@ async function init() {
   $("pause").addEventListener("click", () => invoke("toggle_pause"));
   $("next").addEventListener("click", () => invoke("next_track"));
   $("reload").addEventListener("click", () => invoke("reload_library"));
+  $("song-group").addEventListener("change", (event) => event.stopPropagation());
+  $("check-group").addEventListener("click", () => setGroupChecked(true));
+  $("uncheck-group").addEventListener("click", () => setGroupChecked(false));
   const sheet = $("sheet");
   $("open-settings").addEventListener("click", () => sheet.showModal());
   $("close-settings").addEventListener("click", () => sheet.close());
