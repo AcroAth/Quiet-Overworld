@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="color-scheme" content="dark" />
+    <meta name="theme-color" content="#0f1019" />
     <title>Quiet Overworld</title>
     <link rel="stylesheet" href="style.css" />
     <script type="module" src="main.js" defer></script>
@@ -78,7 +79,7 @@
             <p class="hint" id="gap-hint"></p>
           </fieldset>
 
-          <div class="field">
+          <div class="field" id="volume-row">
             <label for="volume">Volume</label>
             <span class="volume">
               <svg viewBox="0 0 256 256" aria-hidden="true"><path d="M155.51,24.81a8,8,0,0,0-8.42.88L77.25,80H32A16,16,0,0,0,16,96v64a16,16,0,0,0,16,16H77.25l69.84,54.31A8,8,0,0,0,160,224V32A8,8,0,0,0,155.51,24.81ZM32,96H72v64H32ZM144,207.64,88,164.09V91.91l56-43.55ZM208,128a39.93,39.93,0,0,1-10,26.46,8,8,0,0,1-12-10.58,24,24,0,0,0,0-31.72,8,8,0,1,1,12-10.58A40,40,0,0,1,208,128Z"/></svg>
@@ -104,7 +105,7 @@
                 <p class="hint" id="source-hint"></p>
               </div>
 
-              <div class="field" id="version-row">
+              <div class="field desktop-only" id="version-row">
                 <label for="version">Version</label>
                 <select name="gameVersion" id="version"><option value="">Latest release</option></select>
               </div>

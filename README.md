@@ -66,10 +66,19 @@ track.
 | Windows, macOS, Linux | System tray: play/pause, next, open, quit | Closing the window keeps the music going (can be turned off). Optional start at login. On macOS the Dock icon hides while only the tray icon is left. |
 | Android 8+ | Foreground "playing music" notification with a Quit button | Keeps playing with the screen off. Pausing lets Android stop the app as usual. |
 | iOS | Background audio | Mixes with other apps' audio instead of stopping it. |
+| Web (phones) | Lock-screen controls: play/pause, next | [acroath.github.io/Quiet-Overworld](https://acroath.github.io/Quiet-Overworld/). Tap play once; it keeps going with the screen locked. Only the latest release's music. |
 
 On phones the music always streams from Mojang (Java Edition is not installable there).
 
 ## Install
+
+**On a phone**, open [acroath.github.io/Quiet-Overworld](https://acroath.github.io/Quiet-Overworld/) and tap play.
+Browsers only allow sound after a tap, so the first song starts 5 seconds after it. To keep a page playing with the
+screen locked, phones need it to play sound the whole time, so the quiet between songs is played as silence. On an
+iPhone the browser needs iOS 26 or newer (earlier versions cannot play the game's Ogg Vorbis files), and the volume
+is set with the side buttons.
+
+**On a computer**, use the app:
 
 CI builds installers on every push: open the latest successful [Build workflow
 run](https://github.com/AcroAth/Quiet-Overworld/actions/workflows/build.yml) and download the artifact for your system
@@ -122,6 +131,7 @@ npm run tauri ios dev
 
 ```
 src/                     The window: plain HTML, CSS and JavaScript, no framework or bundler
+  web.js                 the web version's engine, in place of the Rust backend (same commands and events)
 src-tauri/src/
   catalog.rs             sounds.json → music situations, weights, volumes, titles
   sources.rs             Mojang's version manifest and asset server, installed game folders, music folders
@@ -134,6 +144,8 @@ src-tauri/src/
 src-tauri/plugins/background-audio/
                          Android foreground service (Kotlin) and iOS audio session
 scripts/make_icon.py     draws the pixel-art icon
+scripts/build-catalog.mjs
+                         builds catalog.json for the web version (Mojang's metadata refuses web pages)
 ```
 
 Settings live in the OS config folder (`settings.json`, e.g. `~/.config/io.github.acroath.quietoverworld/`), and the

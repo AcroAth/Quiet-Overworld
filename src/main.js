@@ -1,5 +1,7 @@
-const { invoke } = window.__TAURI__.core;
-const { listen } = window.__TAURI__.event;
+// In the app the Rust backend answers; on the web page, web.js stands in for it.
+const { invoke, listen } = window.__TAURI__
+  ? { invoke: window.__TAURI__.core.invoke, listen: window.__TAURI__.event.listen }
+  : await import("./web.js");
 
 const $ = (id) => document.getElementById(id);
 const form = $("settings");
@@ -70,7 +72,11 @@ function renderStatus() {
   let subtitle = " ";
   let progress = false;
 
-  if (s.state === "starting") {
+  if (s.state === "ready") {
+    eyebrow = "Quiet Overworld";
+    title = "Press play to start";
+    subtitle = "Keeps playing with the screen locked.";
+  } else if (s.state === "starting") {
     eyebrow = "Starting";
     title = "Looking for music…";
   } else if (s.state === "loading") {
@@ -270,6 +276,8 @@ async function init() {
   detectedInstall = snapshot.detectedInstall;
   // Phones cannot have Java Edition installed, so music always streams there.
   document.body.classList.toggle("mobile", snapshot.mobile);
+  // iPhones ignore a page's volume; the side buttons set it.
+  $("volume-row").hidden = Boolean(snapshot.fixedVolume);
   fillForm();
   acceptStatus(snapshot.status);
 
