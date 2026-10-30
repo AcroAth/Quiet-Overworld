@@ -37,9 +37,15 @@ if (!output) {
   process.exit(2);
 }
 
+// Errors show up as annotations on the workflow run.
+process.on("uncaughtException", (error) => {
+  console.log(`::error::${String(error.stack ?? error).replaceAll("\n", "%0A")}`);
+  process.exit(1);
+});
+
 const manifest = await get(MANIFEST_URL);
 const releases = manifest.versions.filter((v) => v.type === "release").reverse();
-const songs = {};
+const songs = Object.create(null);
 const updates = [];
 const seenIndexes = new Map();
 
@@ -50,7 +56,10 @@ for (const release of releases) {
   // Versions sharing an asset index have the same music.
   let titles = seenIndexes.get(indexId);
   if (!titles) {
-    const { catalog, objects } = await versionMusic(release.id, release.url).catch(() => ({}));
+    const { catalog, objects } = await versionMusic(release.id, release.url).catch((error) => {
+      console.log(`::warning::${release.id}: ${error.message}`);
+      return {};
+    });
     titles = catalog ? Object.values(catalog.tracks).map((t) => t.title) : objects ? legacyTitles(objects) : [];
     seenIndexes.set(indexId, titles);
   }
@@ -73,4 +82,4 @@ for (const release of releases) {
 
 const sorted = Object.fromEntries(Object.entries(songs).sort(([a], [b]) => a.localeCompare(b)));
 await writeFile(output, JSON.stringify({ latest: manifest.latest.release, updates, songs: sorted }, null, 1) + "\n");
-console.log(`${Object.keys(songs).length} songs in ${updates.length} updates`);
+console.log(`::notice::${Object.keys(songs).length} songs in ${updates.length} updates`);
