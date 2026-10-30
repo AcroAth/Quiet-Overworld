@@ -1,10 +1,8 @@
 //! Audio output.
 //!
-//! On desktop the sound device is opened when a song starts and closed when it
-//! ends, so the app holds no audio resources (and never keeps the computer
-//! awake) during the long silences. Phones keep the output open and play
-//! silence instead, which is what lets the OS keep the app running in the
-//! background.
+//! The sound device is opened when a song starts and closed when it ends, so
+//! the app holds no audio resources (and never keeps the computer awake)
+//! during the long silences.
 
 use std::fs::File;
 use std::io::{BufReader, Cursor};
@@ -65,8 +63,6 @@ pub fn prepare(audio: &Audio, hint: Option<&str>) -> Result<Prepared, String> {
 pub enum OutputMode {
     /// Open the device only while a song plays.
     Desktop,
-    /// Keep it open between songs so the OS lets the app run in the background.
-    Phone,
     /// No device: a thread consumes the audio about 100 times faster than
     /// real time. Used by tests.
     #[allow(dead_code)]
@@ -104,17 +100,9 @@ impl Output {
         Ok(player)
     }
 
-    /// Called between songs: desktop releases the device, phones keep it
-    /// open (playing silence) so the app stays alive in the background.
+    /// Called between songs: releases the device.
     pub fn idle(&mut self) {
-        if self.mode != OutputMode::Phone {
-            self.sink = None;
-        } else if self.sink.is_none() {
-            match self.open() {
-                Ok(sink) => self.sink = Some(sink),
-                Err(error) => eprintln!("[quiet-overworld] {error}"),
-            }
-        }
+        self.sink = None;
     }
 
     /// Drops the device, e.g. while paused or after it reported an error.

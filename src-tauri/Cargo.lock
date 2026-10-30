@@ -2960,7 +2960,6 @@ dependencies = [
  "tauri",
  "tauri-build",
  "tauri-plugin-autostart",
- "tauri-plugin-background-audio",
  "tauri-plugin-dialog",
  "tauri-plugin-single-instance",
  "ureq",
@@ -4057,16 +4056,6 @@ dependencies = [
  "tauri",
  "tauri-plugin",
  "thiserror 2.0.21",
-]
-
-[[package]]
-name = "tauri-plugin-background-audio"
-version = "0.1.0"
-dependencies = [
- "objc2-avf-audio",
- "serde",
- "tauri",
- "tauri-plugin",
 ]
 
 [[package]]

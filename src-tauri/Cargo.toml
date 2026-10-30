@@ -10,7 +10,7 @@ rust-version = "1.90"
 [lib]
 # The `_lib` suffix keeps the library name distinct from the binary on Windows.
 name = "quiet_overworld_lib"
-crate-type = ["staticlib", "cdylib", "rlib"]
+crate-type = ["rlib"]
 
 [build-dependencies]
 tauri-build = { version = "2", features = [] }
@@ -23,11 +23,6 @@ rodio = { version = "0.23", default-features = false, features = ["playback", "v
 ureq = "3"
 sha1_smol = "1"
 fastrand = "2"
-
-[target.'cfg(any(target_os = "android", target_os = "ios"))'.dependencies]
-tauri-plugin-background-audio = { path = "plugins/background-audio" }
-
-[target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
 tauri-plugin-autostart = "2"
 tauri-plugin-dialog = "2"
 tauri-plugin-single-instance = "2"

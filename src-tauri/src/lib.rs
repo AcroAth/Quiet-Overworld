@@ -6,9 +6,6 @@ mod library;
 mod settings;
 mod sources;
 
-#[cfg(mobile)]
-mod mobile;
-#[cfg(desktop)]
 mod tray;
 
 use std::path::PathBuf;
@@ -49,7 +46,6 @@ impl AppState {
 struct Snapshot {
     settings: Settings,
     status: Status,
-    mobile: bool,
     /// The game folder auto-detection would use, if any.
     detected_install: Option<String>,
     version: &'static str,
@@ -60,7 +56,6 @@ fn snapshot(state: State<AppState>) -> Snapshot {
     Snapshot {
         settings: state.settings(),
         status: state.status.lock().unwrap().clone(),
-        mobile: cfg!(mobile),
         detected_install: LocalInstall::find(&state.install_roots).map(|i| i.root().display().to_string()),
         version: env!("CARGO_PKG_VERSION"),
     }
@@ -69,7 +64,6 @@ fn snapshot(state: State<AppState>) -> Snapshot {
 #[tauri::command]
 fn update_settings(app: AppHandle, state: State<AppState>, settings: Settings) -> Result<Settings, String> {
     let settings = settings.sanitized();
-    #[cfg(desktop)]
     tray::set_autostart(&app, settings.autostart)?;
     settings.save(&state.settings_path)?;
     *state.settings.lock().unwrap() = settings.clone();
@@ -102,32 +96,17 @@ async fn list_versions(state: State<'_, AppState>) -> Result<Vec<String>, String
 
 #[tauri::command]
 async fn pick_folder(app: AppHandle) -> Option<String> {
-    #[cfg(desktop)]
-    {
-        tray::pick_folder(&app).await
-    }
-    #[cfg(mobile)]
-    {
-        let _ = app;
-        None
-    }
+    tray::pick_folder(&app).await
 }
 
-#[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    let builder = tauri::Builder::default();
-    #[cfg(desktop)]
-    let builder = builder
+    let app = tauri::Builder::default()
         .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| tray::show_window(app)))
         .plugin(tauri_plugin_autostart::init(
             tauri_plugin_autostart::MacosLauncher::LaunchAgent,
             Some(vec![HIDDEN_FLAG]),
         ))
-        .plugin(tauri_plugin_dialog::init());
-    #[cfg(mobile)]
-    let builder = builder.plugin(mobile::init());
-
-    let app = builder
+        .plugin(tauri_plugin_dialog::init())
         .invoke_handler(tauri::generate_handler![
             snapshot,
             update_settings,
@@ -148,11 +127,10 @@ pub fn run() {
         // Closing the window only hides the app in the tray.
         RunEvent::ExitRequested { code: None, api, .. } => {
             let keep = app.try_state::<AppState>().is_some_and(|s| s.settings().close_to_tray);
-            if keep && cfg!(desktop) {
+            if keep {
                 api.prevent_exit();
             }
         }
-        #[cfg(desktop)]
         RunEvent::WindowEvent { label, event: tauri::WindowEvent::Destroyed, .. } => {
             if app.webview_windows().keys().all(|other| *other == label) {
                 tray::set_dock_visible(app, false);
@@ -183,7 +161,7 @@ fn setup(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
         cache_file: paths.app_cache_dir()?.join("catalog.json"),
         default_install_roots: install_roots.clone(),
         mojang: mojang.clone(),
-        output: if cfg!(mobile) { OutputMode::Phone } else { OutputMode::Desktop },
+        output: OutputMode::Desktop,
     };
 
     let status = Arc::new(Mutex::new(Status::default()));
@@ -193,10 +171,7 @@ fn setup(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
         move |new: &Status| {
             *status.lock().unwrap() = new.clone();
             let _ = app.emit("status", new);
-            #[cfg(desktop)]
             tray::update(&app, new);
-            #[cfg(mobile)]
-            mobile::update(&app, new);
         }
     };
     let engine = EngineHandle::spawn(settings.clone(), env, observer);
@@ -209,15 +184,12 @@ fn setup(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
         mojang,
     });
 
-    #[cfg(desktop)]
-    {
-        tray::create(app)?;
-        let autostarted = std::env::args().any(|arg| arg == HIDDEN_FLAG);
-        if !(settings.start_hidden || autostarted) {
-            tray::show_window(app);
-        } else {
-            tray::set_dock_visible(app, false);
-        }
+    tray::create(app)?;
+    let autostarted = std::env::args().any(|arg| arg == HIDDEN_FLAG);
+    if !(settings.start_hidden || autostarted) {
+        tray::show_window(app);
+    } else {
+        tray::set_dock_visible(app, false);
     }
     Ok(())
 }

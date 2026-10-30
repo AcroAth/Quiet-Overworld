@@ -175,9 +175,6 @@ impl LocalInstall {
     /// Where launchers keep game assets by default on this platform.
     pub fn default_roots(home: Option<&Path>, data_dir: Option<&Path>) -> Vec<PathBuf> {
         let mut roots = Vec::new();
-        if cfg!(any(target_os = "android", target_os = "ios")) {
-            return roots;
-        }
         if let Some(data) = data_dir {
             // %APPDATA%\.minecraft on Windows, ~/Library/Application Support/minecraft on macOS.
             roots.push(data.join(".minecraft"));

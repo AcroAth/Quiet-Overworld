@@ -2,7 +2,7 @@
 
 Minecraft with only the music part. A small app that plays Minecraft's background music the way the game does: a random
 track from the overworld soundtrack, then ten to twenty minutes of quiet, then another. It lives in the system tray on
-Windows, macOS and Linux, and keeps playing in the background on Android and iOS.
+Windows, macOS and Linux. On phones it is a web page that keeps playing with the screen locked.
 
 ![Quiet Overworld, playing and between songs](docs/screenshot.png)
 
@@ -43,6 +43,11 @@ Other situations can be picked from the **Music** menu: Creative mode, Underwate
 (Meadow, Cherry Grove, Deep Dark, …), the Nether biomes, the End, the dragon fight, the credits and the title screen.
 A specific game version can be chosen under **More settings** (for example an older release with only C418's music).
 
+Under **Songs**, each song the chosen music can play has a checkbox, grouped by the update that added it ("Original
+(1.0)", "Update Aquatic (1.13)", …). Pick an update and press **Check all** or **Uncheck all** to switch a whole group.
+By default each kind of music plays its songs from the earliest update that had it: C418's original tracks in the
+overworld.
+
 Controls: **Pause** freezes the song or the countdown. **Play a song now** / **Next song** skips the wait or the current
 track.
 
@@ -64,8 +69,6 @@ track.
 | | Background | Notes |
 | --- | --- | --- |
 | Windows, macOS, Linux | System tray: play/pause, next, open, quit | Closing the window keeps the music going (can be turned off). Optional start at login. On macOS the Dock icon hides while only the tray icon is left. |
-| Android 8+ | Foreground "playing music" notification with a Quit button | Keeps playing with the screen off. Pausing lets Android stop the app as usual. |
-| iOS | Background audio | Mixes with other apps' audio instead of stopping it. |
 | Web (phones) | Lock-screen controls: play/pause, next | [acroath.github.io/Quiet-Overworld](https://acroath.github.io/Quiet-Overworld/). Tap play once; it keeps going with the screen locked. Only the latest release's music. |
 
 On phones the music always streams from Mojang (Java Edition is not installable there).
@@ -78,11 +81,15 @@ screen locked, phones need it to play sound the whole time, so the quiet between
 iPhone the browser needs iOS 26 or newer (earlier versions cannot play the game's Ogg Vorbis files), and the volume
 is set with the side buttons.
 
+iPhone browsers all use Safari's engine, which refuses Mojang's files because the server labels them as plain data.
+There the page plays them through a small relay ([relay/worker.js](relay/worker.js), a Cloudflare Worker) that passes
+each file on labelled as audio and stores nothing. Add `?debug` to the address to see a log of what the player does.
+
 **On a computer**, use the app:
 
 CI builds installers on every push: open the latest successful [Build workflow
 run](https://github.com/AcroAth/Quiet-Overworld/actions/workflows/build.yml) and download the artifact for your system
-(`.msi`/`.exe`, `.dmg`, `.deb`/`.rpm`/`.AppImage`, `.apk`).
+(`.msi`/`.exe`, `.dmg`, `.deb`/`.rpm`/`.AppImage`).
 
 - The builds are not signed by a known developer. Windows SmartScreen warns the first time (More info → Run anyway).
   On macOS, open the app once, then allow it under System Settings → Privacy & Security → Open Anyway (or run
@@ -90,9 +97,6 @@ run](https://github.com/AcroAth/Quiet-Overworld/actions/workflows/build.yml) and
 - On Linux prefer the `.deb` or `.rpm` (under 4 MB). The `.AppImage` carries its own copy of the web engine and is
   around 80 MB. The tray needs `libayatana-appindicator3-1` (installed with the `.deb`). Most panels open the tray menu
   on click; use **Open Quiet Overworld** there.
-- CI signs the Android APK with a throwaway key unless the repository secrets `ANDROID_KEYSTORE_BASE64`,
-  `ANDROID_KEYSTORE_PASSWORD` and `ANDROID_KEY_ALIAS` are set. Installing an update over an APK signed with another
-  key fails; uninstall first.
 
 ## Build from source
 
@@ -111,22 +115,6 @@ npm run tauri dev      # run it
 npm run tauri build    # installers in src-tauri/target/release/bundle
 ```
 
-**Android** (Android Studio SDK + NDK, `NDK_HOME` set, `rustup target add aarch64-linux-android armv7-linux-androideabi`):
-
-```sh
-npm run tauri android init
-npm run tauri android dev          # on a connected phone or emulator
-npm run tauri android build -- --apk
-```
-
-**iOS** (macOS with Xcode, `rustup target add aarch64-apple-ios aarch64-apple-ios-sim`). Building for a real iPhone
-needs an Apple developer team (`bundle > iOS > developmentTeam` in `tauri.conf.json`, or `APPLE_DEVELOPMENT_TEAM`):
-
-```sh
-npm run tauri ios init
-npm run tauri ios dev
-```
-
 ## How it's built
 
 ```
@@ -140,9 +128,9 @@ src-tauri/src/
   engine.rs              the MusicManager port: deadlines, pause, skip, situation changes
   audio.rs               playback with rodio; opens the device only while needed
   tray.rs                tray icon, window lifecycle, autostart (desktop)
-  mobile.rs              background playback hooks (phones)
-src-tauri/plugins/background-audio/
-                         Android foreground service (Kotlin) and iOS audio session
+  history.rs             which update added each song; the default songs
+data/song-history.json   the first release with each song, from scripts/song-history.mjs (monthly in CI)
+relay/worker.js          the audio relay for iPhone browsers (Cloudflare Worker)
 scripts/make_icon.py     draws the pixel-art icon
 scripts/build-catalog.mjs
                          builds catalog.json for the web version (Mojang's metadata refuses web pages)
@@ -167,6 +155,6 @@ npm run tauri dev
 
 ## Not done yet
 
-- No lock-screen or media-key controls (pause and next are in the app and the desktop tray).
-- No volume ducking for notifications or calls; Android and iOS mix the music with other audio.
-- iOS builds are only checked in CI for the simulator; installing on an iPhone needs your own signing.
+- No media-key controls in the desktop app (pause and next are in the window and the tray). The web page has
+  lock-screen controls.
+- The web page offers only the latest release's music, from Mojang's servers.
