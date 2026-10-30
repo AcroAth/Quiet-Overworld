@@ -61,6 +61,9 @@ pub struct Settings {
     pub close_to_tray: bool,
     pub start_hidden: bool,
     pub autostart: bool,
+    /// Songs to play, by song key (see `history::song_key`); None plays the
+    /// default songs.
+    pub songs: Option<Vec<String>>,
 }
 
 impl Default for Settings {
@@ -78,6 +81,7 @@ impl Default for Settings {
             close_to_tray: true,
             start_hidden: false,
             autostart: false,
+            songs: None,
         }
     }
 }
@@ -112,6 +116,10 @@ impl Settings {
         self.game_version = self.game_version.trim().to_string();
         self.minecraft_dir = self.minecraft_dir.trim().to_string();
         self.music_folder = self.music_folder.trim().to_string();
+        if let Some(songs) = &mut self.songs {
+            songs.sort();
+            songs.dedup();
+        }
         self
     }
 

@@ -21,6 +21,7 @@ use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 use serde::Serialize;
 
 use crate::audio::{self, Output, OutputMode, Prepared};
+use crate::history::{Song, Update};
 use crate::library::{install_roots, Audio, Choice, Library, LibraryRequest, Origin, REFRESH_AFTER};
 use crate::settings::{Settings, STARTING_DELAY, TICK};
 use crate::sources::Mojang;
@@ -84,6 +85,10 @@ pub struct Status {
     pub library: Option<String>,
     /// Music situations the library has, e.g. "music.game".
     pub situations: Vec<String>,
+    /// Every song, for the checkboxes in the settings.
+    pub songs: Vec<Song>,
+    /// The updates songs are grouped by, oldest first.
+    pub updates: Vec<Update>,
     pub error: Option<String>,
 }
 
@@ -339,8 +344,13 @@ impl Engine {
             self.wait(Duration::ZERO);
             return;
         };
-        let Some(choice) = library.pick(&self.settings.situation, &mut self.rng, avoid.as_deref()) else {
-            self.track_error = Some("There is no music for this situation here, pick another one".into());
+        let chosen = self.settings.songs.as_deref();
+        let Some(choice) = library.pick(&self.settings.situation, &mut self.rng, avoid.as_deref(), chosen) else {
+            self.track_error = Some(if library.has_music(&self.settings.situation) {
+                "None of the checked songs plays with this music. Check some under Songs.".into()
+            } else {
+                "There is no music for this situation here, pick another one".into()
+            });
             self.phase = Phase::Waiting { due: None, left: Duration::ZERO };
             self.output.idle();
             return;
@@ -483,6 +493,15 @@ impl Engine {
             self.track_error = None;
             self.load_library();
         }
+        if old.songs != self.settings.songs {
+            if let Phase::Waiting { due: due @ None, left } = &mut self.phase {
+                if !self.paused && self.library.is_some() {
+                    // Nothing could play before; try the newly checked songs.
+                    self.track_error = None;
+                    *due = Some(Instant::now() + *left);
+                }
+            }
+        }
         let timing_changed = old.situation != self.settings.situation
             || old.frequency != self.settings.frequency
             || old.custom_min_minutes != self.settings.custom_min_minutes
@@ -569,8 +588,13 @@ impl Engine {
         let mut status = Status {
             paused: self.paused,
             at_ms: SystemTime::now().duration_since(UNIX_EPOCH).map(|d| d.as_millis() as u64).unwrap_or(0),
-            library: self.library.as_ref().map(|l| l.describe(&self.settings.situation)),
+            library: self
+                .library
+                .as_ref()
+                .map(|l| l.describe(&self.settings.situation, self.settings.songs.as_deref())),
             situations: self.library.as_ref().map(|l| l.situations()).unwrap_or_default(),
+            songs: self.library.as_ref().map(|l| l.songs(&self.settings.situation)).unwrap_or_default(),
+            updates: self.library.as_ref().map(|l| l.updates()).unwrap_or_default(),
             error: self.track_error.clone().or_else(|| self.library_error.clone()),
             ..Status::default()
         };

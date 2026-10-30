@@ -1,6 +1,7 @@
 mod audio;
 mod catalog;
 mod engine;
+mod history;
 mod library;
 mod settings;
 mod sources;

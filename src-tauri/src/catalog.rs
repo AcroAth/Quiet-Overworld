@@ -139,13 +139,20 @@ impl Catalog {
         Ok(catalog)
     }
 
-    /// Weighted random choice, the way the game picks a sound from an event.
-    /// `avoid` skips one track (used when skipping) unless it is the only one.
-    pub fn pick(&self, event: &str, rng: &mut fastrand::Rng, avoid: Option<&str>) -> Option<&Entry> {
-        let entries = self.events.get(event)?;
-        let mut pool: Vec<&Entry> = entries.iter().filter(|e| Some(e.path.as_str()) != avoid).collect();
+    /// Weighted random choice, the way the game picks a sound from an event,
+    /// among the tracks `keep` accepts. `avoid` skips one track (used when
+    /// skipping) unless it is the only one.
+    pub fn pick(
+        &self,
+        event: &str,
+        rng: &mut fastrand::Rng,
+        avoid: Option<&str>,
+        keep: impl Fn(&str) -> bool,
+    ) -> Option<&Entry> {
+        let entries: Vec<&Entry> = self.events.get(event)?.iter().filter(|e| keep(&e.path)).collect();
+        let mut pool: Vec<&Entry> = entries.iter().copied().filter(|e| Some(e.path.as_str()) != avoid).collect();
         if pool.iter().all(|e| e.weight == 0) {
-            pool = entries.iter().collect();
+            pool = entries;
         }
         let total: u64 = pool.iter().map(|e| u64::from(e.weight)).sum();
         if total == 0 {
@@ -160,15 +167,6 @@ impl Catalog {
             roll -= weight;
         }
         None
-    }
-
-    /// Number of distinct tracks a situation can play.
-    pub fn track_count(&self, event: &str) -> usize {
-        let mut paths: Vec<&str> =
-            self.events.get(event).map(|entries| entries.iter().map(|e| e.path.as_str()).collect()).unwrap_or_default();
-        paths.sort_unstable();
-        paths.dedup();
-        paths.len()
     }
 }
 
@@ -327,7 +325,7 @@ mod tests {
         let c = catalog();
         let events: Vec<&str> = c.events.keys().map(String::as_str).collect();
         assert_eq!(events, ["music.creative", "music.game", "music.menu"]);
-        assert_eq!(c.track_count("music.game"), 3, "missing assets are skipped");
+        assert_eq!(c.events["music.game"].len(), 3, "missing assets are skipped");
         assert!(!c.tracks.contains_key("records/cat"));
     }
 
@@ -359,7 +357,7 @@ mod tests {
         let mut rng = fastrand::Rng::with_seed(7);
         let mut counts: HashMap<String, u32> = HashMap::new();
         for _ in 0..40_000 {
-            let e = c.pick("music.game", &mut rng, None).unwrap();
+            let e = c.pick("music.game", &mut rng, None, |_| true).unwrap();
             *counts.entry(e.path.clone()).or_default() += 1;
         }
         // Weights are 1, 1 and 2 out of 4.
@@ -374,11 +372,21 @@ mod tests {
         let c = catalog();
         let mut rng = fastrand::Rng::with_seed(1);
         for _ in 0..200 {
-            assert_ne!(c.pick("music.game", &mut rng, Some("music/game/home")).unwrap().path, "music/game/home");
+            assert_ne!(
+                c.pick("music.game", &mut rng, Some("music/game/home"), |_| true).unwrap().path,
+                "music/game/home"
+            );
         }
         // A single-track event still plays its only track.
-        assert_eq!(c.pick("music.menu", &mut rng, Some("music/menu/mutation")).unwrap().path, "music/menu/mutation");
-        assert!(c.pick("music.unknown", &mut rng, None).is_none());
+        let only = c.pick("music.menu", &mut rng, Some("music/menu/mutation"), |_| true).unwrap();
+        assert_eq!(only.path, "music/menu/mutation");
+        assert!(c.pick("music.unknown", &mut rng, None, |_| true).is_none());
+        // Only the kept tracks play.
+        for _ in 0..200 {
+            let kept = c.pick("music.game", &mut rng, None, |path| path.ends_with("sweden")).unwrap();
+            assert_eq!(kept.path, "music/game/sweden");
+        }
+        assert!(c.pick("music.game", &mut rng, None, |_| false).is_none());
     }
 
     #[test]

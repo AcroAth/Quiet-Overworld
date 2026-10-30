@@ -8,6 +8,7 @@ use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use serde::{Deserialize, Serialize};
 
 use crate::catalog::{split_title, AssetObject, Catalog, CATALOG_FORMAT};
+use crate::history::{Song, Songs, Update};
 use crate::settings::{Settings, SourceMode};
 use crate::sources::{scan_folder, LocalInstall, Mojang};
 
@@ -16,7 +17,7 @@ use crate::sources::{scan_folder, LocalInstall, Mojang};
 pub const REFRESH_AFTER: Duration = Duration::from_secs(24 * 60 * 60);
 
 pub enum Library {
-    Minecraft { catalog: Catalog, install: Option<LocalInstall>, mojang: Option<Arc<Mojang>> },
+    Minecraft { catalog: Catalog, songs: Box<Songs>, install: Option<LocalInstall>, mojang: Option<Arc<Mojang>> },
     Folder { files: Vec<PathBuf> },
 }
 
@@ -77,10 +78,24 @@ impl Choice {
 }
 
 impl Library {
-    pub fn pick(&self, situation: &str, rng: &mut fastrand::Rng, avoid: Option<&str>) -> Option<Choice> {
+    fn minecraft(catalog: Catalog, install: Option<LocalInstall>, mojang: Option<Arc<Mojang>>) -> Library {
+        let songs = Box::new(Songs::new(&catalog));
+        Library::Minecraft { catalog, songs, install, mojang }
+    }
+
+    /// Picks a track among the chosen songs (`None` means the default songs).
+    pub fn pick(
+        &self,
+        situation: &str,
+        rng: &mut fastrand::Rng,
+        avoid: Option<&str>,
+        chosen: Option<&[String]>,
+    ) -> Option<Choice> {
         match self {
-            Library::Minecraft { catalog, install, mojang } => {
-                let entry = catalog.pick(situation, rng, avoid)?;
+            Library::Minecraft { catalog, songs, install, mojang } => {
+                let allowed = songs.allowed(chosen);
+                let keep = |path: &str| songs.key(path).is_some_and(|key| allowed.contains(key));
+                let entry = catalog.pick(situation, rng, avoid, keep)?;
                 let track = catalog.tracks.get(&entry.path)?;
                 let object = AssetObject { hash: track.hash.clone(), size: track.size };
                 let fetch = match (install.as_ref().and_then(|i| i.object(&object)), mojang) {
@@ -108,13 +123,14 @@ impl Library {
         }
     }
 
-    /// Short description for the UI, e.g. "Minecraft 26.3 · 33 tracks".
-    pub fn describe(&self, situation: &str) -> String {
+    /// Short description for the UI, e.g. "Minecraft 26.3 · 12 of 33 songs".
+    pub fn describe(&self, situation: &str, chosen: Option<&[String]>) -> String {
         match self {
-            Library::Minecraft { catalog, .. } => {
-                let count = catalog.track_count(situation);
-                let tracks = if count == 1 { "track" } else { "tracks" };
-                format!("Minecraft {} · {count} {tracks}", catalog.version)
+            Library::Minecraft { catalog, songs, .. } => {
+                let allowed = songs.allowed(chosen);
+                let here: Vec<Song> = songs.list(catalog, situation).into_iter().filter(|s| s.here).collect();
+                let checked = here.iter().filter(|s| allowed.contains(&s.key)).count();
+                format!("Minecraft {} · {checked} of {} songs", catalog.version, here.len())
             }
             Library::Folder { files } => format!("Your music · {} files", files.len()),
         }
@@ -124,6 +140,30 @@ impl Library {
     pub fn situations(&self) -> Vec<String> {
         match self {
             Library::Minecraft { catalog, .. } => catalog.events.keys().cloned().collect(),
+            Library::Folder { .. } => Vec::new(),
+        }
+    }
+
+    /// Whether the library has music for a situation at all.
+    pub fn has_music(&self, situation: &str) -> bool {
+        match self {
+            Library::Minecraft { catalog, .. } => catalog.events.contains_key(situation),
+            Library::Folder { .. } => true,
+        }
+    }
+
+    /// Every song with whether it is a default and whether `situation` plays it.
+    pub fn songs(&self, situation: &str) -> Vec<Song> {
+        match self {
+            Library::Minecraft { catalog, songs, .. } => songs.list(catalog, situation),
+            Library::Folder { .. } => Vec::new(),
+        }
+    }
+
+    /// The updates the songs are grouped by, oldest first.
+    pub fn updates(&self) -> Vec<Update> {
+        match self {
+            Library::Minecraft { songs, .. } => songs.updates.clone(),
             Library::Folder { .. } => Vec::new(),
         }
     }
@@ -163,7 +203,7 @@ impl LibraryRequest {
             SourceMode::Local => {
                 let install = LocalInstall::find(&self.install_roots).ok_or_else(no_install_message)?;
                 let catalog = install.catalog(&self.game_version)?;
-                Ok(Library::Minecraft { catalog, install: Some(install), mojang: None })
+                Ok(Library::minecraft(catalog, Some(install), None))
             }
             SourceMode::Minecraft => {
                 let install = LocalInstall::find(&self.install_roots);
@@ -174,7 +214,7 @@ impl LibraryRequest {
                         None => return Err(online_error),
                     },
                 };
-                Ok(Library::Minecraft { catalog, install, mojang: Some(self.mojang.clone()) })
+                Ok(Library::minecraft(catalog, install, Some(self.mojang.clone())))
             }
         }
     }
