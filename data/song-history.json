@@ -1,0 +1,339 @@
+{
+ "latest": "26.3",
+ "updates": [
+  {
+   "id": "1.0",
+   "name": "Original"
+  },
+  {
+   "id": "1.6.1",
+   "name": "Horse Update"
+  },
+  {
+   "id": "1.7.10",
+   "name": null
+  },
+  {
+   "id": "1.13",
+   "name": "Update Aquatic"
+  },
+  {
+   "id": "1.16",
+   "name": "Nether Update"
+  },
+  {
+   "id": "1.18",
+   "name": "Caves & Cliffs: Part II"
+  },
+  {
+   "id": "1.19",
+   "name": "The Wild Update"
+  },
+  {
+   "id": "1.20",
+   "name": "Trails & Tales"
+  },
+  {
+   "id": "1.21",
+   "name": "Tricky Trials"
+  },
+  {
+   "id": "1.21.6",
+   "name": "Chase the Skies"
+  },
+  {
+   "id": "26.2",
+   "name": null
+  }
+ ],
+ "songs": {
+  "aerie": {
+   "title": "Lena Raine - Aerie",
+   "added": "1.19"
+  },
+  "afamiliarroom": {
+   "title": "Aaron Cherof - A Familiar Room",
+   "added": "1.20"
+  },
+  "alpha": {
+   "title": "C418 - Alpha",
+   "added": "1.7.10"
+  },
+  "ancestry": {
+   "title": "Lena Raine - Ancestry",
+   "added": "1.19"
+  },
+  "anordinaryday": {
+   "title": "Kumi Tanioka - An Ordinary Day",
+   "added": "1.18"
+  },
+  "ariamath": {
+   "title": "C418 - Aria Math",
+   "added": "1.6.1"
+  },
+  "axolotl": {
+   "title": "C418 - Axolotl",
+   "added": "1.13"
+  },
+  "balladofthecats": {
+   "title": "C418 - Ballad of the Cats",
+   "added": "1.6.1"
+  },
+  "beginning2": {
+   "title": "C418 - Beginning 2",
+   "added": "1.6.1"
+  },
+  "belowandabove": {
+   "title": "Amos Roddy - Below and Above",
+   "added": "1.21.6"
+  },
+  "biomefest": {
+   "title": "C418 - Biome Fest",
+   "added": "1.6.1"
+  },
+  "blindspots": {
+   "title": "C418 - Blind Spots",
+   "added": "1.6.1"
+  },
+  "boss": {
+   "title": "C418 - Boss",
+   "added": "1.6.1"
+  },
+  "brokenclocks": {
+   "title": "Amos Roddy - Broken Clocks",
+   "added": "1.21.6"
+  },
+  "bromeliad": {
+   "title": "Aaron Cherof - Bromeliad",
+   "added": "1.20"
+  },
+  "chrysopoeia": {
+   "title": "Lena Raine - Chrysopoeia",
+   "added": "1.16"
+  },
+  "clark": {
+   "title": "C418 - Clark",
+   "added": "1.0"
+  },
+  "comfortingmemories": {
+   "title": "Kumi Tanioka - Comforting Memories",
+   "added": "1.18"
+  },
+  "concretehalls": {
+   "title": "C418 - Concrete Halls",
+   "added": "1.6.1"
+  },
+  "credits": {
+   "title": "Credits",
+   "added": "1.6.1"
+  },
+  "crescentdunes": {
+   "title": "Aaron Cherof - Crescent Dunes",
+   "added": "1.20"
+  },
+  "danny": {
+   "title": "C418 - Danny",
+   "added": "1.0"
+  },
+  "deadvoxel": {
+   "title": "C418 - Dead Voxel",
+   "added": "1.6.1"
+  },
+  "deeper": {
+   "title": "Lena Raine - Deeper",
+   "added": "1.21"
+  },
+  "dragonfish": {
+   "title": "C418 - Dragon Fish",
+   "added": "1.13"
+  },
+  "dreiton": {
+   "title": "C418 - Dreiton",
+   "added": "1.6.1"
+  },
+  "dryhands": {
+   "title": "C418 - Dry Hands",
+   "added": "1.0"
+  },
+  "ebb": {
+   "title": "fingerspit - Ebb",
+   "added": "26.2"
+  },
+  "echointhewind": {
+   "title": "Aaron Cherof - Echo in the Wind",
+   "added": "1.20"
+  },
+  "eldunknown": {
+   "title": "Lena Raine - Eld Unknown",
+   "added": "1.21"
+  },
+  "end": {
+   "title": "End",
+   "added": "1.6.1"
+  },
+  "endless": {
+   "title": "Lena Raine - Endless",
+   "added": "1.21"
+  },
+  "featherfall": {
+   "title": "Aaron Cherof - Featherfall",
+   "added": "1.21"
+  },
+  "firebugs": {
+   "title": "Lena Raine - Firebugs",
+   "added": "1.19"
+  },
+  "fireflies": {
+   "title": "Amos Roddy - Fireflies",
+   "added": "1.21.6"
+  },
+  "floatingdream": {
+   "title": "Kumi Tanioka - Floating Dream",
+   "added": "1.18"
+  },
+  "floatingtrees": {
+   "title": "C418 - Floating Trees",
+   "added": "1.6.1"
+  },
+  "haggstrom": {
+   "title": "C418 - Haggstrom",
+   "added": "1.0"
+  },
+  "hauntmuskie": {
+   "title": "C418 - Haunt Muskie",
+   "added": "1.6.1"
+  },
+  "home": {
+   "title": "fingerspit - Home",
+   "added": "26.2"
+  },
+  "infiniteamethyst": {
+   "title": "Lena Raine - Infinite Amethyst",
+   "added": "1.18"
+  },
+  "key": {
+   "title": "C418 - Key",
+   "added": "1.0"
+  },
+  "komorebi": {
+   "title": "Kumi Tanioka - komorebi",
+   "added": "1.21"
+  },
+  "labyrinthine": {
+   "title": "Lena Raine - Labyrinthine",
+   "added": "1.19"
+  },
+  "lefttobloom": {
+   "title": "Lena Raine - Left to Bloom",
+   "added": "1.18"
+  },
+  "lilypad": {
+   "title": "Amos Roddy - Lilypad",
+   "added": "1.21.6"
+  },
+  "livingmice": {
+   "title": "C418 - Living Mice",
+   "added": "1.0"
+  },
+  "memories": {
+   "title": "fingerspit - Memories",
+   "added": "26.2"
+  },
+  "miceonvenus": {
+   "title": "C418 - Mice on Venus",
+   "added": "1.0"
+  },
+  "minecraft": {
+   "title": "C418 - Minecraft",
+   "added": "1.0"
+  },
+  "moogcity2": {
+   "title": "C418 - Moog City 2",
+   "added": "1.6.1"
+  },
+  "mutation": {
+   "title": "C418 - Mutation",
+   "added": "1.6.1"
+  },
+  "nightly": {
+   "title": "fingerspit - Nightly",
+   "added": "26.2"
+  },
+  "onemoreday": {
+   "title": "Lena Raine - One More Day",
+   "added": "1.18"
+  },
+  "ospiano": {
+   "title": "Amos Roddy - O's Piano",
+   "added": "1.21.6"
+  },
+  "oxygene": {
+   "title": "C418 - Oxygène",
+   "added": "1.0"
+  },
+  "pokopoko": {
+   "title": "Kumi Tanioka - pokopoko",
+   "added": "1.21"
+  },
+  "puzzlebox": {
+   "title": "Aaron Cherof - Puzzlebox",
+   "added": "1.21"
+  },
+  "rubedo": {
+   "title": "Lena Raine - Rubedo",
+   "added": "1.16"
+  },
+  "shores": {
+   "title": "fingerspit - Shores",
+   "added": "26.2"
+  },
+  "shuniji": {
+   "title": "C418 - Shuniji",
+   "added": "1.13"
+  },
+  "sobelow": {
+   "title": "Lena Raine - So Below",
+   "added": "1.16"
+  },
+  "standtall": {
+   "title": "Lena Raine - Stand Tall",
+   "added": "1.18"
+  },
+  "subwooferlullaby": {
+   "title": "C418 - Subwoofer Lullaby",
+   "added": "1.0"
+  },
+  "sweden": {
+   "title": "C418 - Sweden",
+   "added": "1.0"
+  },
+  "taswell": {
+   "title": "C418 - Taswell",
+   "added": "1.6.1"
+  },
+  "theend": {
+   "title": "C418 - The End",
+   "added": "1.7.10"
+  },
+  "warmth": {
+   "title": "C418 - Warmth",
+   "added": "1.6.1"
+  },
+  "watcher": {
+   "title": "Aaron Cherof - Watcher",
+   "added": "1.21"
+  },
+  "wending": {
+   "title": "Lena Raine - Wending",
+   "added": "1.18"
+  },
+  "wethands": {
+   "title": "C418 - Wet Hands",
+   "added": "1.0"
+  },
+  "yakusoku": {
+   "title": "Kumi Tanioka - yakusoku",
+   "added": "1.21"
+  }
+ }
+}
