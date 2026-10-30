@@ -5,7 +5,8 @@
 //
 // Usage: node scripts/song-history.mjs <output.json>
 
-import { writeFile } from "node:fs/promises";
+import { mkdir, writeFile } from "node:fs/promises";
+import { dirname } from "node:path";
 
 import { MANIFEST_URL, get, songKey, titleFor, versionMusic } from "./mojang.mjs";
 
@@ -81,5 +82,6 @@ for (const release of releases) {
 }
 
 const sorted = Object.fromEntries(Object.entries(songs).sort(([a], [b]) => a.localeCompare(b)));
+await mkdir(dirname(output), { recursive: true });
 await writeFile(output, JSON.stringify({ latest: manifest.latest.release, updates, songs: sorted }, null, 1) + "\n");
 console.log(`::notice::${Object.keys(songs).length} songs in ${updates.length} updates`);
