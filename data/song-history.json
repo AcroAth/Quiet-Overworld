@@ -10,10 +10,6 @@
    "name": "Horse Update"
   },
   {
-   "id": "1.7.10",
-   "name": null
-  },
-  {
    "id": "1.13",
    "name": "Update Aquatic"
   },
@@ -57,7 +53,7 @@
   },
   "alpha": {
    "title": "C418 - Alpha",
-   "added": "1.7.10"
+   "added": "1.6.1"
   },
   "ancestry": {
    "title": "Lena Raine - Ancestry",
@@ -123,10 +119,6 @@
    "title": "C418 - Concrete Halls",
    "added": "1.6.1"
   },
-  "credits": {
-   "title": "Credits",
-   "added": "1.6.1"
-  },
   "crescentdunes": {
    "title": "Aaron Cherof - Crescent Dunes",
    "added": "1.20"
@@ -166,10 +158,6 @@
   "eldunknown": {
    "title": "Lena Raine - Eld Unknown",
    "added": "1.21"
-  },
-  "end": {
-   "title": "End",
-   "added": "1.6.1"
   },
   "endless": {
    "title": "Lena Raine - Endless",
@@ -313,7 +301,7 @@
   },
   "theend": {
    "title": "C418 - The End",
-   "added": "1.7.10"
+   "added": "1.6.1"
   },
   "warmth": {
    "title": "C418 - Warmth",
