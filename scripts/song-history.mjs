@@ -29,7 +29,8 @@ const UPDATE_NAMES = {
 function legacyTitles(objects) {
   return Object.keys(objects)
     .filter((key) => /(^|\/)(new)?music\/.*\.ogg$/.test(key) && !/records|streaming/.test(key))
-    .map((key) => titleFor(key.replace(/\.ogg$/, "").split("/").pop(), {}));
+    // "sounds/music/game/end/end.ogg" -> "music/game/end/end", as sounds.json names it.
+    .map((key) => titleFor(key.replace(/\.ogg$/, "").replace(/^.*?(new)?music\//, "music/"), {}));
 }
 
 const output = process.argv[2];
