@@ -18,6 +18,11 @@ const SETTINGS_KEY = "quiet-overworld.settings";
 const DEFAULT_SITUATION = "music.game";
 const TICK_MS = 50;
 const STARTING_DELAY_MS = 5000;
+// A song hands over to the silence this close to its end, while it is still
+// playing. Once the element stops, iOS will not let it start again without a
+// tap; the last half second of a track is its fade-out anyway.
+const HANDOVER_S = 0.5;
+const BLOCKED = "The browser stopped the music from going on. Tap play to continue.";
 
 const DEFAULTS = {
   situation: DEFAULT_SITUATION,
@@ -204,7 +209,9 @@ async function loadCatalog() {
 function play() {
   engine.pausing = false;
   audio.play().catch((error) => {
-    if (error.name === "NotAllowedError") setPaused(true);
+    if (error.name !== "NotAllowedError") return;
+    engine.trackError = BLOCKED;
+    setPaused(true);
   });
 }
 
@@ -278,7 +285,10 @@ function setPaused(paused) {
     }
   }
   if (paused) stopElement();
-  else play();
+  else {
+    if (engine.trackError === BLOCKED) engine.trackError = null;
+    play();
+  }
   publish();
 }
 
@@ -324,6 +334,13 @@ function applySettings(next) {
 function checkDeadline() {
   if (engine.phase === "waiting" && engine.due !== null && engine.catalog && Date.now() >= engine.due) {
     startTrack(null);
+  } else if (
+    engine.phase === "playing" &&
+    !engine.paused &&
+    Number.isFinite(audio.duration) &&
+    audio.duration - audio.currentTime < HANDOVER_S
+  ) {
+    finishTrack();
   }
 }
 
