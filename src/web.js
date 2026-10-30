@@ -13,7 +13,7 @@ const RESOURCES_URL = "https://resources.download.minecraft.net";
 // Mojang labels its files as plain data, which Safari's engine (every browser
 // on an iPhone) refuses to play. relay/worker.js passes them on labelled as
 // audio; it is used only once a browser has refused a direct link.
-const RELAY_URL = "";
+const RELAY_URL = "https://quiet-overworld-relay.freshsym-860c58cf.workers.dev";
 const SETTINGS_KEY = "quiet-overworld.settings";
 const DEFAULT_SITUATION = "music.game";
 const TICK_MS = 50;
