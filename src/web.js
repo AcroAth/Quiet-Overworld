@@ -262,6 +262,10 @@ const engine = {
   // Set while the engine itself pauses the element, so a pause coming from
   // the system (a call, another app's audio) can be told apart.
   pausing: false,
+  // Another app's sound (a reel, a call) stopped the element. Unlike a pause,
+  // the quiet's countdown keeps running, and playback resumes as soon as the
+  // page may play again.
+  interrupted: false,
   useRelay: relayFirst(),
 };
 
@@ -360,6 +364,7 @@ function applyVolume() {
 }
 
 function setPaused(paused) {
+  engine.interrupted = false;
   if (engine.paused === paused) return;
   engine.paused = paused;
   if (engine.phase === "waiting") {
@@ -391,6 +396,7 @@ function next() {
   if (!engine.started) engine.started = true;
   const avoid = engine.track?.key;
   engine.paused = false;
+  engine.interrupted = false;
   startTrack(avoid);
 }
 
@@ -424,6 +430,8 @@ function applySettings(next) {
 }
 
 function checkDeadline() {
+  // Starting a song now would cut into the other app's sound.
+  if (engine.interrupted) return;
   if (engine.phase === "waiting" && engine.due !== null && engine.catalog && Date.now() >= engine.due) {
     startTrack(null);
   } else if (
@@ -470,12 +478,36 @@ audio.addEventListener("error", () => {
       : `"${title}" could not be streamed from Mojang, will try again`,
   );
 });
-// A call or another app's audio pauses the element: treat it as a pause.
+// A call or another app's audio pauses the element.
 audio.addEventListener("pause", () => {
   // Switching tracks also pauses the element for a moment; by the time the
   // event arrives it is playing again.
-  if (engine.pausing || audio.ended || !audio.paused) return;
-  setPaused(true);
+  if (engine.pausing || audio.ended || !audio.paused || engine.paused) return;
+  log("interrupted");
+  engine.interrupted = true;
+  publish();
+});
+
+function resume() {
+  engine.interrupted = false;
+  engine.trackError = engine.trackError === BLOCKED ? null : engine.trackError;
+  if (engine.paused) return publish();
+  if (engine.phase === "waiting" && engine.due !== null && engine.catalog && Date.now() >= engine.due) {
+    return startTrack(null);
+  }
+  play();
+  publish();
+}
+
+// iOS may resume the page itself once the other sound ends.
+audio.addEventListener("play", () => {
+  if (!engine.interrupted) return;
+  engine.interrupted = false;
+  publish();
+});
+// Otherwise it resumes when the page is in front again.
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden && engine.interrupted) resume();
 });
 
 if ("mediaSession" in navigator) {
@@ -487,7 +519,7 @@ if ("mediaSession" in navigator) {
       // Not supported here.
     }
   };
-  handle("play", () => userStart() || setPaused(false));
+  handle("play", () => userStart() || (engine.interrupted ? resume() : setPaused(false)));
   handle("pause", () => setPaused(true));
   handle("nexttrack", next);
   handle("seekbackward", null);
@@ -508,7 +540,7 @@ function updateMediaSession(status) {
       artwork: [{ src: new URL("icon.png", location.href).href, sizes: "64x64", type: "image/png" }],
     });
   }
-  navigator.mediaSession.playbackState = engine.paused ? "paused" : "playing";
+  navigator.mediaSession.playbackState = engine.paused || engine.interrupted ? "paused" : "playing";
 }
 
 function status() {
@@ -516,7 +548,7 @@ function status() {
   const catalog = engine.catalog;
   const s = {
     state: "waiting",
-    paused: engine.paused,
+    paused: engine.paused || engine.interrupted,
     title: null,
     artist: null,
     origin: "stream",
@@ -529,7 +561,10 @@ function status() {
     situations: catalog ? Object.keys(catalog.events) : [],
     songs: [],
     updates: [],
-    error: engine.trackError ?? engine.catalogError,
+    error:
+      engine.trackError ??
+      engine.catalogError ??
+      (engine.interrupted ? "Stopped for another app's sound. It goes on when you come back here." : null),
   };
   if (catalog) {
     const { byPath, songs, defaults } = songInfo(catalog);
@@ -598,7 +633,9 @@ export async function invoke(command, args) {
       return next;
     }
     case "toggle_pause":
-      if (!userStart()) setPaused(!engine.paused);
+      if (userStart()) return;
+      if (engine.interrupted) resume();
+      else setPaused(!engine.paused);
       return;
     case "next_track":
       return next();
