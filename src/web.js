@@ -10,6 +10,10 @@
 // scripts/build-catalog.mjs.
 
 const RESOURCES_URL = "https://resources.download.minecraft.net";
+// Mojang labels its files as plain data, which Safari's engine (every browser
+// on an iPhone) refuses to play. relay/worker.js passes them on labelled as
+// audio; it is used only once a browser has refused a direct link.
+const RELAY_URL = "";
 const SETTINGS_KEY = "quiet-overworld.settings";
 const DEFAULT_SITUATION = "music.game";
 const TICK_MS = 50;
@@ -174,6 +178,7 @@ const engine = {
   // Set while the engine itself pauses the element, so a pause coming from
   // the system (a call, another app's audio) can be told apart.
   pausing: false,
+  useRelay: false,
 };
 
 async function loadCatalog() {
@@ -234,12 +239,16 @@ function startTrack(avoid) {
   const [title, artist] = splitTitle(info.title);
   engine.phase = "loading";
   engine.due = null;
-  engine.track = { key: entry.path, title, artist, gain: entry.volume };
+  engine.track = { key: entry.path, title, artist, gain: entry.volume, hash: info.hash };
   audio.loop = false;
-  audio.src = `${RESOURCES_URL}/${info.hash.slice(0, 2)}/${info.hash}`;
+  audio.src = trackUrl(info.hash);
   applyVolume();
   if (!engine.paused) play();
   publish();
+}
+
+function trackUrl(hash) {
+  return engine.useRelay ? `${RELAY_URL}/${hash}` : `${RESOURCES_URL}/${hash.slice(0, 2)}/${hash}`;
 }
 
 function finishTrack() {
@@ -335,6 +344,12 @@ audio.addEventListener("error", () => {
   if (engine.phase !== "loading" && engine.phase !== "playing") return;
   const title = engine.track?.title ?? "The song";
   const unsupported = audio.error?.code === MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED;
+  if (unsupported && RELAY_URL && !engine.useRelay) {
+    engine.useRelay = true;
+    audio.src = trackUrl(engine.track.hash);
+    if (!engine.paused) play();
+    return;
+  }
   failTrack(
     unsupported
       ? `This browser cannot play Minecraft's music files (Ogg Vorbis)`
